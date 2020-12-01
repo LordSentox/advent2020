@@ -7,15 +7,15 @@ fn main() {
 
     // Read the file line by line into unsigned integer values as puzzle input.
 
-    let mut expenses = Vec::new();
-    for line in reader.lines() {
-        let line = line.expect("Failure while reading file");
-        expenses.push(
+    let expenses: Vec<u32> = reader
+        .lines()
+        .map(|line| {
+            let line = line.expect("Failure while reading file");
             line.trim()
                 .parse::<u32>()
-                .expect("Could not parse puzzle input into u32"),
-        );
-    }
+                .expect("Could not parse puzzle input into u32")
+        })
+        .collect();
 
     // Try all possible combinations of two elements in the vector ------------
 
