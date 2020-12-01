@@ -1,0 +1,11 @@
+[package]
+name = "advent2020"
+version = "0.1.0"
+authors = ["Arne Dußin <arne.dussin@gmail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "first_day"
+path = "src/01/main.rs"
+
+[dependencies]
