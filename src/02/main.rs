@@ -8,27 +8,36 @@ use std::str::FromStr;
 struct CharPolicy {
     /// The character this policy concerns itself with
     character: char,
-    /// Information about how often the character must and how often it may be contained in a
-    /// password requiring this policy. The number of occurences must be in this range.
-    accepted_occurences: Range<usize>,
+    /// For the first version, this is the minimum number of occurences as well as the maximum
+    /// number of occurences of the character in question.
+    /// For the second part of the puzzle, this describes the indices that must be checked.
+    accepted_occurences: (usize, usize),
 }
 
 impl CharPolicy {
-    pub fn new(character: char, accepted_occurences: Range<usize>) -> Self {
-        Self {
-            character,
-            accepted_occurences,
-        }
-    }
-
-    /// Checks if a provided password complies with this policy. Returns true if it does, otherwise
-    /// false.
-    pub fn check_password(&self, password: &str) -> bool {
+    /// Checks if a provided password complies with this policy when interpreted as the policy of
+    /// the first version. Returns true if it does, otherwise false.
+    pub fn check_password_by_a(&self, password: &str) -> bool {
         // Count the occurences of the important character in the password.
         let occurences = password.chars().filter(|&c| c == self.character).count();
 
         // Check that the number of occurences is indeed in the desired range.
-        self.accepted_occurences.contains(&occurences)
+        occurences >= self.accepted_occurences.0 && occurences <= self.accepted_occurences.1
+    }
+
+    /// Checks if a provided password complies with the policy when interpreting it as a policy for
+    /// the second part of the puzzle, the 'new' policy.
+    pub fn check_password_by_b(&self, password: &str) -> bool {
+        let first_is_occ = match password.chars().nth(self.accepted_occurences.0 - 1) {
+            Some(c) => self.character == c,
+            None => false,
+        };
+        let second_is_occ = match password.chars().nth(self.accepted_occurences.1 - 1) {
+            Some(c) => self.character == c,
+            None => false,
+        };
+
+        first_is_occ ^ second_is_occ
     }
 }
 
@@ -77,10 +86,7 @@ impl FromStr for CharPolicy {
                 return Err("Minimum must be greater than the maximum to create a range".to_owned());
             }
 
-            Range {
-                start: min,
-                end: max + 1,
-            }
+            (min, max)
         };
 
         Ok(Self {
@@ -94,21 +100,26 @@ fn main() {
     let file = File::open("input/02").expect("Could not open input file");
     let reader = BufReader::new(file);
 
-    let num_valid = reader
-        .lines()
-        .filter(|line| {
-            let line = line.as_ref().expect("Failure while reading input file");
+    let mut num_valid_a = 0;
+    let mut num_valid_b = 0;
+    for line in reader.lines() {
+        let line = line.expect("Failure while reading input file");
 
-            let parts: Vec<&str> = line.split(':').collect();
-            if parts.len() != 2 {
-                panic!("A line does not contain two parts, a rule and a password");
-            }
+        let parts: Vec<&str> = line.split(':').collect();
+        if parts.len() != 2 {
+            panic!("A line does not contain two parts, a rule and a password");
+        }
 
-            let policy = CharPolicy::from_str(parts[0]).expect("Could not construct char policy");
-            policy.check_password(parts[1].trim())
-        })
-        .count();
+        let policy = CharPolicy::from_str(parts[0]).expect("Could not construct char policy");
 
-    println!("For part a)");
-    println!("{} passwords met their criteria", num_valid);
+        if policy.check_password_by_a(parts[1].trim()) {
+            num_valid_a += 1;
+        }
+        if policy.check_password_by_b(parts[1].trim()) {
+            num_valid_b += 1;
+        }
+    }
+
+    println!("For part a) {} passwords meet their criteria", num_valid_a);
+    println!("For part b) {} passwords meet their criteria", num_valid_b);
 }
