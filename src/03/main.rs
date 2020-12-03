@@ -71,7 +71,17 @@ fn main() {
     let terrain = fs::read_to_string("input/03").expect("Could not read terrain file");
     let terrain = Terrain::from_str(&terrain).expect("Could not parse terrain from string");
 
-    // Plot the course for the first exercise and calculate the amount of trees.
-    let trees_a = terrain.trees_on_course((3, 1));
-    println!("Trees on course for a) {}", trees_a);
+    // Plot the courses for both exercises (the first one is for a)
+    let courses = [(3, 1), (1, 1), (5, 1), (7, 1), (1, 2)];
+
+    let trees_on_courses: Vec<usize> = courses
+        .iter()
+        .map(|&course| terrain.trees_on_course(course))
+        .collect();
+
+    println!("Trees on course for a) {}", trees_on_courses[0]);
+
+    // The number of trees encountered for each course multiplied is the solution for  b)
+    let multiplied: usize = trees_on_courses.iter().product();
+    println!("Multiplied trees for b) {}", multiplied);
 }
