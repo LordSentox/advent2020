@@ -12,4 +12,9 @@ path = "src/01/main.rs"
 name = "02"
 path = "src/02/main.rs"
 
+[[bin]]
+name = "03"
+path = "src/03/main.rs"
+
 [dependencies]
+thiserror = "*"
