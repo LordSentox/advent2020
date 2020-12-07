@@ -1,13 +1,13 @@
 use std::fs;
 use std::str::{FromStr, SplitWhitespace};
 
-#[derive(PartialEq, Eq, Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct BagColour {
     special: String,
     base: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct BagRule {
     container_colour: BagColour,
     contains: Vec<(BagColour, usize)>,
@@ -32,6 +32,10 @@ impl BagRule {
 
     pub fn container_colour(&self) -> &BagColour {
         &self.container_colour
+    }
+
+    pub fn contained(&self) -> &Vec<(BagColour, usize)> {
+        &self.contains
     }
 }
 
@@ -188,4 +192,32 @@ fn main() {
     let num_possible = possible_rules.iter().filter(|&possible| *possible).count();
 
     println!("Number of possible containers for a) {}", num_possible);
+
+    rules.sort();
+    let mut current_bags: Vec<(BagColour, usize)> = vec![own_bag];
+    let mut num_bags = 0;
+    while !current_bags.is_empty() {
+        current_bags = current_bags
+            .drain(..)
+            .flat_map(|(colour, amount)| {
+                let pos = rules
+                    .binary_search_by_key(&&colour, |rule| rule.container_colour())
+                    .expect("Unable to find rule");
+
+                let children: Vec<(BagColour, usize)> = rules[pos]
+                    .contained()
+                    .iter()
+                    .map(|(child_colour, child_amount)| {
+                        let adjusted_amount = amount * child_amount;
+                        num_bags += adjusted_amount;
+                        (child_colour.clone(), adjusted_amount)
+                    })
+                    .collect();
+
+                children.into_iter()
+            })
+            .collect();
+    }
+
+    println!("Number of bags in one shiny golden bag for b) {}", num_bags);
 }
