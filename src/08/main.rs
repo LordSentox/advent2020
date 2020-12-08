@@ -1,7 +1,7 @@
 use std::fs;
 use std::str::FromStr;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Opcode {
     // No operation
     Noop,
@@ -11,6 +11,7 @@ enum Opcode {
     Acc,
 }
 
+#[derive(Debug)]
 struct Operation {
     code: Opcode,
     val: isize,
@@ -63,23 +64,18 @@ impl FromStr for Operation {
     }
 }
 
-fn main() {
-    let input = fs::read_to_string("input/08").expect("Unable to open input file");
-    let operations: Vec<Operation> = input
-        .lines()
-        .map(|op| Operation::from_str(op).expect("Unable to parse operation"))
-        .collect();
-
+// Run the code as defined in the operations. Returns Ok with the accumulator value if the program
+// terminated normally. Otherwise it returns Err with the instruction the loop was detected on and
+// the last accumulator value at the time of detection.
+fn run_code(operations: &[Operation]) -> Result<isize, (usize, isize)> {
     let mut visited = vec![false; operations.len()];
-
     let mut acc = 0;
     let mut pc = 0;
-    loop {
+    while pc < operations.len() {
         // Check if this operation has been executed before. Since the program is non-branching
         // this means we have found an infinite loop.
         if visited[pc] {
-            println!("Found infinite loop on instruction {} -- aborting", pc);
-            break;
+            return Err((pc, acc));
         }
         visited[pc] = true;
 
@@ -104,5 +100,46 @@ fn main() {
         }
     }
 
+    Ok(acc)
+}
+
+fn switch_jump_noop(operation: &mut Operation) {
+    if operation.code == Opcode::Noop {
+        operation.code = Opcode::Jump;
+    } else if operation.code == Opcode::Jump {
+        operation.code = Opcode::Noop;
+    }
+}
+
+fn main() {
+    let input = fs::read_to_string("input/08").expect("Unable to open input file");
+    let mut operations: Vec<Operation> = input
+        .lines()
+        .map(|op| Operation::from_str(op).expect("Unable to parse operation"))
+        .collect();
+
+    let (pc, acc) = run_code(&operations).expect_err(
+        "Program terminated correctly without any changes to the code. (should detect loop)",
+    );
+    println!("Found infinite loop on instruction {}", pc);
     println!("Accumulator value for a) {}", acc);
+
+    // Try changing exactly one instruction at the time and let the program run to see how to fix
+    // the infinite loop.
+    for i in 0..operations.len() {
+        // Accumulative instructions will not be changed.
+        if operations[i].code == Opcode::Acc {
+            continue;
+        }
+
+        switch_jump_noop(&mut operations[i]);
+        if let Ok(acc) = run_code(&operations) {
+            println!(
+                "Switching operation {} to {:?} fixed the loop. Acc is at: {}",
+                i, operations[i], acc
+            );
+            break;
+        }
+        switch_jump_noop(&mut operations[i]);
+    }
 }
