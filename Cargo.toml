@@ -36,5 +36,9 @@ path = "src/07/main.rs"
 name = "08"
 path = "src/08/main.rs"
 
+[[bin]]
+name = "09"
+path = "src/09/main.rs"
+
 [dependencies]
 thiserror = "*"
