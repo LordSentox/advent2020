@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Arne Dußin <arne.dussin@gmail.com>"]
 edition = "2018"
 
+[dev-dependencies]
+criterion = "*"
+
 [[bin]]
 name = "01"
 path = "src/01/main.rs"
@@ -43,6 +46,14 @@ path = "src/09/main.rs"
 [[bin]]
 name = "11"
 path = "src/11/main.rs"
+
+[[bin]]
+name = "12"
+path = "src/12/main.rs"
+
+[[bench]]
+name = "bench_11"
+harness = false
 
 [dependencies]
 thiserror = "*"
